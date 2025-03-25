@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>超聲波驅蚊器</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 40px;
+            background-color: #eef8f3;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 18px;
+            color: #444;
+        }
+        button {
+            font-size: 20px;
+            padding: 12px 24px;
+            margin: 15px;
+            border-radius: 8px;
+            border: none;
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+        }
+        button:active {
+            background-color: #388e3c;
+        }
+        #stop {
+            background-color: #f44336;
+        }
+        #stop:active {
+            background-color: #d32f2f;
+        }
+        #status {
+            margin-top: 25px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<h1>超聲波驅蚊器</h1>
+<p>支援手機播放 20~22kHz 高頻音，嚇走蚊子</p>
+
+<button id="startFixed">固定頻率 20kHz</button>
+<button id="startSweep">掃頻 20~22kHz</button>
+<button id="stop">停止播放</button>
+<div id="status">目前狀態：未播放</div>
+
+<script>
+    let audioContext;
+    let oscillator;
+    let sweepInterval;
+
+    function stopTone() {
+        if (oscillator) {
+            oscillator.stop();
+            oscillator.disconnect();
+            oscillator = null;
+        }
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+        clearInterval(sweepInterval);
+        document.getElementById("status").innerText = "目前狀態：未播放";
+    }
+
+    function startFixedTone() {
+        stopTone();
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        oscillator = audioContext.createOscillator();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(20000, audioContext.currentTime); // 20kHz
+        oscillator.connect(audioContext.destination);
+        oscillator.start();
+        document.getElementById("status").innerText = "目前狀態：播放中（20kHz）";
+    }
+
+    function startSweepTone() {
+        stopTone();
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        oscillator = audioContext.createOscillator();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(20000, audioContext.currentTime);
+        oscillator.connect(audioContext.destination);
+        oscillator.start();
+
+        let freq = 20000;
+        sweepInterval = setInterval(() => {
+            freq += 100;
+            if (freq > 22000) freq = 20000;
+            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+        }, 300); // 每 300ms 改變頻率
+
+        document.getElementById("status").innerText = "目前狀態：掃頻中（20~22kHz）";
+    }
+
+    document.getElementById("startFixed").addEventListener("click", startFixedTone);
+    document.getElementById("startSweep").addEventListener("click", startSweepTone);
+    document.getElementById("stop").addEventListener("click", stopTone);
+</script>
+</body>
+</html>
